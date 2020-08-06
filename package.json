@@ -1,0 +1,13 @@
+{
+  "name": "@echo-health/illustrations",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "build": "node build.js"
+  },
+  "dependencies": {
+    "fs-extra": "^9.0.1",
+    "prettier": "^2.0.5",
+    "sharp": "^0.25.4"
+  }
+}
