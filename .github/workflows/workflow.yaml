@@ -27,6 +27,17 @@ jobs:
       - name: Build packages
         run: npm run build
 
+      - name: Authenticate gcloud
+        env:
+          GCLOUD_AUTH: ${{ secrets.GCLOUD_AUTH }}
+        run: |
+          echo "$GCLOUD_AUTH" | base64 --decode > "$HOME"/gcloud.json
+          gcloud auth activate-service-account --key-file=$HOME/gcloud.json
+          gcloud auth configure-docker
+      - name: Publish static files to CDN
+        run: |
+          gsutil -h 'Cache-Control:public, max-age=31536000' -m cp -r -Z  ./dist/web-cdn/* gs://echo-illustrations
+
       - id: semver_tag
         uses: anothrNick/github-tag-action@master
         env:
