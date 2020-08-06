@@ -1,0 +1,54 @@
+name: CI Workflow
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    name: Build
+    if: github.head_ref == null # head_ref won't be null for Pull Request builds
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v1
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Build packages
+        run: npm run build
+
+      - id: semver_tag
+        uses: anothrNick/github-tag-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEFAULT_BUMP: major
+
+      - name: Publish @echo-health/illustrations-web package
+        env:
+          VERSION: ${{ steps.semver_tag.outputs.new_tag }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        working-directory: ./dist/web
+        run: |
+          npm --no-git-tag-version version ${VERSION}
+          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc
+          npm publish
+
+      - name: Publish @echo-health/illustrations-react-native package
+        env:
+          VERSION: ${{ steps.semver_tag.outputs.new_tag }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        working-directory: ./dist/rn
+        run: |
+          npm --no-git-tag-version version ${VERSION}
+          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc
+          npm publish
