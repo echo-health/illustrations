@@ -43,7 +43,7 @@ function successLog(message) {
   console.log("✓", message);
 }
 
-function generateWebFiles(sourcePath, imageData, resolution) {
+function generateWebFiles(sourcePath, imageData, resolution, width, height) {
   const name = getIllustratioNameFromFilename(sourcePath);
   const contentHash = crypto.createHash("sha1").update(imageData).digest("hex");
   const outputFileName = `${name}.${contentHash}${resolution}.png`;
@@ -52,6 +52,8 @@ function generateWebFiles(sourcePath, imageData, resolution) {
     ...imageMap,
     [name]: {
       ...imageMap[name],
+      width: width,
+      height: height,
       [resolution]: `https://storage.googleapis.com/echo-illustrations/${outputFileName}`
     }
   };
@@ -95,14 +97,18 @@ illustrations.forEach((ill) => {
   for (const [key, value] of sizes) {
     // Create each file one at a time
     chain = chain
-      .then(() => Promise.resolve())
       .then(() => image.metadata())
       .then((meta) => {
-        return image.resize(Math.floor(meta.width * value)).toBuffer();
-      })
-      .then(async (imageData) => {
-        await generateWebFiles(ill, imageData, key);
-        await generateNativeFiles(ill, imageData, key);
+        const width = Math.floor(meta.width * sizeMap["@1x"]);
+        const height = Math.floor(meta.height * sizeMap["@1x"]);
+
+        image
+          .resize(Math.floor(meta.width * value))
+          .toBuffer()
+          .then((imageData) => {
+            generateWebFiles(ill, imageData, key, width, height);
+            generateNativeFiles(ill, imageData, key);
+          });
       });
   }
 });
