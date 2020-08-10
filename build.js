@@ -52,7 +52,7 @@ function generateWebFiles(sourcePath, imageData, resolution) {
     ...imageMap,
     [name]: {
       ...imageMap[name],
-      [resolution]: `https://storage.googleapis/illustrations/${outputFileName}`
+      [resolution]: `https://storage.googleapis/echo-illustrations/${outputFileName}`
     }
   };
 
