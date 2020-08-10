@@ -114,6 +114,11 @@ chain.then(() => {
   );
 
   fs.outputFileSync(
+    path.join(OUTPUT_FOLDER_WEB, "index.d.ts"),
+    format(`export default ${JSON.stringify(imageMap)}`, ".js")
+  );
+
+  fs.outputFileSync(
     path.join(OUTPUT_FOLDER_RN, "package.json"),
     format(JSON.stringify(makeReactNativePackageJson()), "json")
   );
