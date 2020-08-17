@@ -66,17 +66,10 @@ function generateWebFiles(sourcePath, imageData, resolution, width, height) {
   successLog(`generated "${outputFileName}" for web`);
 }
 
-let imageMapNative = {};
-
 function generateNativeFiles(sourcePath, imageData, res) {
   const name = getIllustratioNameFromFilename(sourcePath);
   const resolution = res == "@1x" ? "" : res;
   const outputFileName = `${name}${resolution}.png`;
-
-  imageMapNative = {
-    ...imageMapNative,
-    [name]: `@echo-health/illustrations-react-native/${name}.png`
-  };
 
   fs.outputFileSync(path.join(OUTPUT_FOLDER_RN, outputFileName), imageData);
 
@@ -129,16 +122,6 @@ chain.then(() => {
   fs.outputFileSync(
     path.join(OUTPUT_FOLDER_WEB, "index.d.ts"),
     format(`export default ${JSON.stringify(imageMap)}`, ".js")
-  );
-
-  fs.outputFileSync(
-    path.join(OUTPUT_FOLDER_RN, "index.js"),
-    format(`module.exports = ${JSON.stringify(imageMapNative)}`, ".js")
-  );
-
-  fs.outputFileSync(
-    path.join(OUTPUT_FOLDER_RN, "index.d.ts"),
-    format(`export default ${JSON.stringify(imageMapNative)}`, ".js")
   );
 
   fs.outputFileSync(
