@@ -37,6 +37,9 @@ function format(code, format) {
   });
 }
 
+const altTextFile = fs.readFileSync("./alt-text.json", "utf8");
+const altTextMap = JSON.parse(altTextFile);
+
 let imageMap = {};
 
 function successLog(message) {
@@ -47,6 +50,7 @@ function generateWebFiles(sourcePath, imageData, resolution, width, height) {
   const name = getIllustratioNameFromFilename(sourcePath);
   const contentHash = crypto.createHash("sha1").update(imageData).digest("hex");
   const outputFileName = `${name}.${contentHash}${resolution}.png`;
+  const altText = altTextMap[name];
 
   imageMap = {
     ...imageMap,
@@ -54,6 +58,7 @@ function generateWebFiles(sourcePath, imageData, resolution, width, height) {
       ...imageMap[name],
       width: width,
       height: height,
+      altText: `Illustration of ${altText}`,
       [resolution]: `https://storage.googleapis.com/echo-illustrations/${outputFileName}`
     }
   };
