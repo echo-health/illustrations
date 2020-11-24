@@ -25,6 +25,13 @@ function getIllustrations(folderPath) {
 
 const illustrations = getIllustrations(SOURCE_FOLDER);
 
+const resolutionMap = {
+  "@4x": 1,
+  "@3x": 0.75,
+  "@2x": 0.5,
+  "@1x": 0.25
+};
+
 // Remove folders after each build
 fs.removeSync(OUTPUT_FOLDER_WEB);
 fs.removeSync(OUTPUT_FOLDER_WEB_CDN);
@@ -37,84 +44,82 @@ function format(code, format) {
   });
 }
 
-let imageMap = {};
-
 function successLog(message) {
   console.log("✓", message);
-}
-
-function generateWebFiles(sourcePath, imageData, resolution, width, height) {
-  const name = getIllustratioNameFromFilename(sourcePath);
-  const contentHash = crypto.createHash("sha1").update(imageData).digest("hex");
-  const outputFileName = `${name}.${contentHash}${resolution}.png`;
-
-  imageMap = {
-    ...imageMap,
-    [name]: {
-      ...imageMap[name],
-      width: width,
-      height: height,
-      altText: "",
-      [resolution]: `https://storage.googleapis.com/echo-illustrations/${outputFileName}`
-    }
-  };
-
-  fs.outputFileSync(
-    path.join(OUTPUT_FOLDER_WEB_CDN, outputFileName),
-    imageData
-  );
-
-  successLog(`generated "${outputFileName}" for web`);
-}
-
-function generateNativeFiles(sourcePath, imageData, res) {
-  const name = getIllustratioNameFromFilename(sourcePath);
-  const resolution = res == "@1x" ? "" : res;
-  const outputFileName = `${name}${resolution}.png`;
-
-  fs.outputFileSync(path.join(OUTPUT_FOLDER_RN, outputFileName), imageData);
-
-  successLog(`generated "${outputFileName}" for react-native`);
 }
 
 function getIllustratioNameFromFilename(fileName) {
   return fileName.replace(/[ ]+/g, "-").trim().replace(".png", "");
 }
 
-const sizeMap = {
-  "@4x": 1,
-  "@3x": 0.75,
-  "@2x": 0.5,
-  "@1x": 0.25
-};
+function makeWebPackageJson() {
+  return {
+    name: "@echo-health/illustrations-web",
+    version: "1.0.0",
+    main: "index.js"
+  };
+}
 
-let chain = Promise.resolve();
+function makeReactNativePackageJson() {
+  return {
+    name: "@echo-health/illustrations-react-native",
+    version: "1.0.0",
+    main: "index.js"
+  };
+}
 
-illustrations.forEach((ill) => {
-  const sizes = Object.entries(sizeMap);
+async function processWebFileForResolution(name, buffer, resolution) {
+  const contentHash = crypto.createHash("sha1").update(buffer).digest("hex");
+  const outputFileName = `${name}.${contentHash}${resolution}.png`;
+  await fs.outputFile(path.join(OUTPUT_FOLDER_WEB_CDN, outputFileName), buffer);
+  successLog(`generated "${outputFileName}" for web`);
+  return `https://storage.googleapis.com/echo-illustrations/${outputFileName}`;
+}
 
-  const image = sharp(path.join(SOURCE_FOLDER, ill));
+async function processNativeFileForResolution(name, buffer, resolution) {
+  const outputFileName = `${name}${resolution}.png`;
+  fs.outputFileSync(path.join(OUTPUT_FOLDER_RN, outputFileName), buffer);
+  successLog(`generated "${outputFileName}" for react-native`);
+}
 
-  for (const [key, value] of sizes) {
-    // Create each file one at a time
-    chain = chain
-      .then(() => image.metadata())
-      .then((meta) => {
-        const width = Math.floor(meta.width * sizeMap["@1x"]);
-        const height = Math.floor(meta.height * sizeMap["@1x"]);
+async function processIllustration(illustration) {
+  const resolutions = Object.entries(resolutionMap);
+  const name = getIllustratioNameFromFilename(illustration);
+  const image = sharp(path.join(SOURCE_FOLDER, illustration));
+  const meta = await image.metadata();
+  const width = Math.floor(meta.width * resolutionMap["@1x"]);
+  const height = Math.floor(meta.height * resolutionMap["@1x"]);
+  const processedImageData = {
+    name,
+    width,
+    height
+  };
 
-        image
-          .resize(Math.floor(meta.width * value))
-          .toBuffer()
-          .then((imageData) => {
-            generateWebFiles(ill, imageData, key, width, height);
-            generateNativeFiles(ill, imageData, key);
-          });
-      });
+  for (const [res, resMult] of resolutions) {
+    const buffer = await image
+      .resize(Math.floor(meta.width * resMult))
+      .toBuffer();
+
+    // Process the web file
+    const hostedWebUrl = await processWebFileForResolution(name, buffer, res);
+    processedImageData[res] = hostedWebUrl;
+
+    // Process the native file
+    await processNativeFileForResolution(name, buffer, res);
   }
-});
 
-chain.then(() => {
+  return processedImageData;
+}
+
+async function build() {
+  const operations = illustrations.map(processIllustration);
+  const processedIllustrations = await Promise.all(operations);
+
+  const imageMap = processedIllustrations.reduce((data, image) => {
+    data[image.name] = image;
+    return data;
+  }, {});
+
   fs.outputFileSync(
     path.join(OUTPUT_FOLDER_WEB, "index.js"),
     format(`module.exports = ${JSON.stringify(imageMap)}`, ".js")
@@ -134,20 +139,6 @@ chain.then(() => {
     path.join(OUTPUT_FOLDER_WEB, "package.json"),
     format(JSON.stringify(makeWebPackageJson()), "json")
   );
-});
-
-function makeWebPackageJson() {
-  return {
-    name: "@echo-health/illustrations-web",
-    version: "1.0.0",
-    main: "index.js"
-  };
 }
 
-function makeReactNativePackageJson() {
-  return {
-    name: "@echo-health/illustrations-react-native",
-    version: "1.0.0",
-    main: "index.js"
-  };
-}
+build();
