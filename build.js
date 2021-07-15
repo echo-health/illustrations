@@ -121,8 +121,18 @@ async function build() {
   }, {});
 
   fs.outputFileSync(
+    path.join(OUTPUT_FOLDER_RN, "index.js"),
+    format(`module.exports = ${JSON.stringify(imageMap)}`, ".js")
+  );
+
+  fs.outputFileSync(
     path.join(OUTPUT_FOLDER_WEB, "index.js"),
     format(`module.exports = ${JSON.stringify(imageMap)}`, ".js")
+  );
+
+  fs.outputFileSync(
+    path.join(OUTPUT_FOLDER_RN, "index.d.ts"),
+    format(`export default ${JSON.stringify(imageMap)}`, ".js")
   );
 
   fs.outputFileSync(
