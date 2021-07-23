@@ -132,7 +132,7 @@ async function build() {
 
   /*
     As of Typescript 2.6 "Arbitrary expressions are forbidden in export assignments in ambient contexts",
-    which essentially means we needed to update the format of out `index.d.ts` files. This means we need
+    which essentially means we needed to update the format of our `index.d.ts` files. This means we need
     to explicitly declare our const and export it
     https://github.com/Microsoft/TypeScript/wiki/Breaking-Changes#arbitrary-expressions-are-forbidden-in-export-assignments-in-ambient-contexts
   */
