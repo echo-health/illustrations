@@ -130,14 +130,21 @@ async function build() {
     format(`module.exports = ${JSON.stringify(imageMap)}`, ".js")
   );
 
+  /*
+    As of Typescript 2.6 "Arbitrary expressions are forbidden in export assignments in ambient contexts",
+    which essentially means we needed to update the format of our `index.d.ts` files. This means we need
+    to explicitly declare our const and export it
+    https://github.com/Microsoft/TypeScript/wiki/Breaking-Changes#arbitrary-expressions-are-forbidden-in-export-assignments-in-ambient-contexts
+  */
+
   fs.outputFileSync(
     path.join(OUTPUT_FOLDER_RN, "index.d.ts"),
-    format(`export default ${JSON.stringify(imageMap)}`, ".js")
+    format(`declare const _exported: ${JSON.stringify(imageMap)}; export = _exported;`, ".d.ts")
   );
 
   fs.outputFileSync(
     path.join(OUTPUT_FOLDER_WEB, "index.d.ts"),
-    format(`export default ${JSON.stringify(imageMap)}`, ".js")
+    format(`declare const _exported: ${JSON.stringify(imageMap)}; export = _exported;`, ".d.ts")
   );
 
   fs.outputFileSync(
