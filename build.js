@@ -139,12 +139,22 @@ async function build() {
 
   fs.outputFileSync(
     path.join(OUTPUT_FOLDER_RN, "index.d.ts"),
-    format(`declare const _exported: ${JSON.stringify(imageMap)}; export = _exported;`, ".d.ts")
+    format(
+      `declare const _exported: ${JSON.stringify(
+        imageMap
+      )}; export = _exported;`,
+      ".d.ts"
+    )
   );
 
   fs.outputFileSync(
     path.join(OUTPUT_FOLDER_WEB, "index.d.ts"),
-    format(`declare const _exported: ${JSON.stringify(imageMap)}; export = _exported;`, ".d.ts")
+    format(
+      `declare const _exported: ${JSON.stringify(
+        imageMap
+      )}; export = _exported;`,
+      ".d.ts"
+    )
   );
 
   fs.outputFileSync(
