@@ -22,7 +22,7 @@ jobs:
             ${{ runner.os }}-node-
 
       - name: Install deps
-        run: npm ci --include=optional sharp
+        run: npm install --os=linux --cpu=x64 sharp
 
       - name: Build packages
         run: npm run build
