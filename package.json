@@ -6,8 +6,8 @@
     "build": "node build.js"
   },
   "dependencies": {
-    "fs-extra": "^9.0.1",
-    "prettier": "^2.0.5",
-    "sharp": "^0.25.4"
+    "fs-extra": "^11",
+    "prettier": "^3.2.5",
+    "sharp": "^0.33.2"
   }
 }
